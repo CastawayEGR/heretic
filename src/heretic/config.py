@@ -206,6 +206,16 @@ class Settings(BaseSettings):
         description="Dataset of prompts that tend to result in refusals (used for evaluating model performance).",
     )
 
+    non_interactive: bool = Field(
+        default=False,
+        description="Run in non-interactive mode. Automatically saves the model with the least refusals to output_dir.",
+    )
+
+    output_dir: str | None = Field(
+        default=None,
+        description="Directory to save the abliterated model in non-interactive mode. If not set, uses '<model_name>-heretic' in current directory.",
+    )
+
     # "Model" refers to the Pydantic model of the settings class here,
     # not to the language model. The field must have this exact name.
     model_config = SettingsConfigDict(

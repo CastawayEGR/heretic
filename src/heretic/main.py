@@ -359,6 +359,47 @@ def run():
         key=lambda trial: trial.user_attrs["refusals"],
     )
 
+    print()
+    print("[bold green]Optimization finished![/]")
+
+    # Non-interactive mode: automatically save the best trial and exit
+    if settings.non_interactive:
+        best_trial = best_trials[0]
+        print()
+        print(
+            f"Best trial: [bold]{best_trial.user_attrs['index']}[/] "
+            f"(Refusals: {best_trial.user_attrs['refusals']}/{len(evaluator.bad_prompts)}, "
+            f"KL divergence: {best_trial.user_attrs['kl_divergence']:.2f})"
+        )
+
+        # Determine output directory
+        if settings.output_dir:
+            save_directory = Path(settings.output_dir)
+        else:
+            # Use model name with -heretic suffix
+            model_name = Path(settings.model).name
+            save_directory = Path(f"{model_name}-heretic")
+
+        print()
+        print(f"Restoring model from trial [bold]{best_trial.user_attrs['index']}[/]...")
+        print("* Reloading model...")
+        model.reload_model()
+        print("* Abliterating...")
+        model.abliterate(
+            refusal_directions,
+            best_trial.user_attrs["direction_index"],
+            best_trial.user_attrs["parameters"],
+        )
+
+        print()
+        print(f"Saving model to [bold]{save_directory}[/]...")
+        save_directory.mkdir(parents=True, exist_ok=True)
+        model.model.save_pretrained(save_directory)
+        model.tokenizer.save_pretrained(save_directory)
+        print(f"[bold green]Model saved to {save_directory}[/]")
+        return
+
+    # Interactive mode: show trial selection menu
     choices = [
         Choice(
             title=(
@@ -378,8 +419,6 @@ def run():
         )
     )
 
-    print()
-    print("[bold green]Optimization finished![/]")
     print()
     print(
         (
